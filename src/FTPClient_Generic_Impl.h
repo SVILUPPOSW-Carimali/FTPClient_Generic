@@ -36,25 +36,37 @@
 
 /////////////////////////////////////////////
 
-FTPClient_Generic::FTPClient_Generic(char* _serverAdress, uint16_t _port, char* _userName, char* _passWord,
+FTPClient_Generic::FTPClient_Generic(const char* _serverAdress, uint16_t _port, const char* _userName, const char* _passWord,
                                      uint16_t _timeout)
 {
-  userName      = _userName;
-  passWord      = _passWord;
-  serverAdress  = _serverAdress;
+  userName      = strdup(_userName);
+  passWord      = strdup(_passWord);
+  serverAdress  = strdup(_serverAdress);
   port          = _port;
   timeout       = _timeout;
 }
 
 /////////////////////////////////////////////
 
-FTPClient_Generic::FTPClient_Generic(char* _serverAdress, char* _userName, char* _passWord, uint16_t _timeout)
+FTPClient_Generic::FTPClient_Generic(const char* _serverAdress, const char* _userName, const char* _passWord, uint16_t _timeout)
 {
-  userName      = _userName;
-  passWord      = _passWord;
-  serverAdress  = _serverAdress;
+  userName      = strdup(_userName);
+  passWord      = strdup(_passWord);
+  serverAdress  = strdup(_serverAdress);
   port          = FTP_PORT;
   timeout       = _timeout;
+}
+
+FTPClient_Generic::~FTPClient_Generic() {
+  if (userName) {
+    free(userName);
+  }
+  if (passWord) {
+    free(passWord);
+  }
+  if (serverAdress) {
+    free(serverAdress);
+  }
 }
 
 /////////////////////////////////////////////
@@ -255,12 +267,7 @@ void FTPClient_Generic::OpenConnection(theFTPClient  * cmdClient, theFTPClient  
   client = cmdClient;
   dclient = dataClient;
 
-#if ( (ESP32) && !FTP_CLIENT_USING_ETHERNET )
-
-  if ( client->connect(serverAdress, port, timeout) )
-#else
   if ( client->connect(serverAdress, port) )
-#endif
   {
     FTP_LOGINFO(F("Command connected"));
   }
@@ -413,12 +420,7 @@ void FTPClient_Generic::InitFile(const char* type)
 
   FTP_LOGINFO3(F("_dataAddress: "), _dataAddress, F(", Data port: "), _dataPort);
 
-#if ( (ESP32) && !FTP_CLIENT_USING_ETHERNET )
-
-  if (dclient->connect(_dataAddress, _dataPort, timeout))
-#else
   if (dclient->connect(_dataAddress, _dataPort))
-#endif
   {
     FTP_LOGDEBUG(F("Data connection established"));
   }

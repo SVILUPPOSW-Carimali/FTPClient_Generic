@@ -110,8 +110,9 @@ class FTPClient_Generic
 
   public:
   
-    FTPClient_Generic(char* _serverAdress, uint16_t _port, char* _userName, char* _passWord, uint16_t _timeout = 10000);
-    FTPClient_Generic(char* _serverAdress, char* _userName, char* _passWord, uint16_t _timeout = 10000);
+    FTPClient_Generic(const char* _serverAdress, uint16_t _port, const char* _userName, const char* _passWord, uint16_t _timeout = 10000);
+    FTPClient_Generic(const char* _serverAdress, const char* _userName, const char* _passWord, uint16_t _timeout = 10000);
+    ~FTPClient_Generic();
     
     void OpenConnection(theFTPClient  * cmdClient, theFTPClient  * dataClient);
     void CloseConnection();
