@@ -61,7 +61,7 @@ FTPClient_Generic::FTPClient_Generic(char* _serverAdress, char* _userName, char*
 
 theFTPClient* FTPClient_Generic::GetDataClient()
 {
-  return &dclient;
+  return dclient;
 }
 
 /////////////////////////////////////////////
@@ -88,8 +88,8 @@ void FTPClient_Generic::GetLastModifiedTime(const char  * fileName, char* result
     return;
   }
 
-  client.print(COMMAND_FILE_LAST_MOD_TIME);
-  client.println(fileName);
+  client->print(COMMAND_FILE_LAST_MOD_TIME);
+  client->println(fileName);
   GetFTPAnswer (result, 4);
 }
 
@@ -139,10 +139,10 @@ void FTPClient_Generic::GetFTPAnswer (char* result, int offsetStart)
 
   unsigned long _m = millis();
 
-  while (!client.available() && millis() < _m + timeout)
+  while (!client->available() && millis() < _m + timeout)
     delay(100);
 
-  if ( !client.available())
+  if ( !client->available())
   {
     memset( outBuf, 0, sizeof(outBuf) );
     strcpy( outBuf, "Offline");
@@ -153,9 +153,9 @@ void FTPClient_Generic::GetFTPAnswer (char* result, int offsetStart)
     return;
   }
 
-  while (client.available())
+  while (client->available())
   {
-    thisByte = client.read();
+    thisByte = client->read();
 
     if (outCount < sizeof(outBuf))
     {
@@ -203,7 +203,7 @@ void FTPClient_Generic::WriteData (unsigned char * data, int dataLength)
 
   FTP_LOGDEBUG1("WriteData: datalen = ", dataLength);
 
-  WriteClientBuffered(&dclient, &data[0], dataLength);
+  WriteClientBuffered(dclient, &data[0], dataLength);
 }
 
 /////////////////////////////////////////////
@@ -211,7 +211,7 @@ void FTPClient_Generic::WriteData (unsigned char * data, int dataLength)
 void FTPClient_Generic::CloseFile ()
 {
   FTP_LOGDEBUG(F("Close File"));
-  dclient.stop();
+  dclient->stop();
 
   if (!isConnected())
   {
@@ -241,22 +241,25 @@ void FTPClient_Generic::Write(const char * str)
 
 void FTPClient_Generic::CloseConnection()
 {
-  client.println(COMMAND_QUIT);
-  client.stop();
+  client->println(COMMAND_QUIT);
+  client->stop();
   FTP_LOGINFO(F("Connection closed"));
 }
 
 /////////////////////////////////////////////
 
-void FTPClient_Generic::OpenConnection()
+void FTPClient_Generic::OpenConnection(theFTPClient  * cmdClient, theFTPClient  * dataClient)
 {
   FTP_LOGINFO1(F("Connecting to: "), serverAdress);
 
+  client = cmdClient;
+  dclient = dataClient;
+
 #if ( (ESP32) && !FTP_CLIENT_USING_ETHERNET )
 
-  if ( client.connect(serverAdress, port, timeout) )
+  if ( client->connect(serverAdress, port, timeout) )
 #else
-  if ( client.connect(serverAdress, port) )
+  if ( client->connect(serverAdress, port) )
 #endif
   {
     FTP_LOGINFO(F("Command connected"));
@@ -266,15 +269,15 @@ void FTPClient_Generic::OpenConnection()
 
   FTP_LOGINFO1("Send USER = ", userName);
 
-  client.print(COMMAND_USER);
-  client.println(userName);
+  client->print(COMMAND_USER);
+  client->println(userName);
 
   GetFTPAnswer();
 
   FTP_LOGINFO1("Send PASSWORD = ", passWord);
 
-  client.print(COMMAND_PASS);
-  client.println(passWord);
+  client->print(COMMAND_PASS);
+  client->println(passWord);
 
   GetFTPAnswer();
 }
@@ -291,15 +294,15 @@ void FTPClient_Generic::RenameFile(const char* from, const char* to)
     return;
   }
 
-  client.print(COMMAND_RENAME_FILE_FROM);
-  client.println(from);
+  client->print(COMMAND_RENAME_FILE_FROM);
+  client->println(from);
 
   GetFTPAnswer();
 
   FTP_LOGINFO("Send RNTO");
 
-  client.print(COMMAND_RENAME_FILE_TO);
-  client.println(to);
+  client->print(COMMAND_RENAME_FILE_TO);
+  client->println(to);
 
   GetFTPAnswer();
 }
@@ -316,8 +319,8 @@ void FTPClient_Generic::NewFile (const char* fileName)
     return;
   }
 
-  client.print(COMMAND_FILE_UPLOAD);
-  client.println(fileName);
+  client->print(COMMAND_FILE_UPLOAD);
+  client->println(fileName);
 
   GetFTPAnswer();
 }
@@ -336,7 +339,7 @@ void FTPClient_Generic::InitFile(const char* type)
 
   FTP_LOGINFO("Send PASV");
 
-  client.println(COMMAND_PASSIVE_MODE);
+  client->println(COMMAND_PASSIVE_MODE);
   GetFTPAnswer();
 
   // KH
@@ -347,7 +350,7 @@ void FTPClient_Generic::InitFile(const char* type)
 
   while (strtol(outBuf, &tmpPtr, 10 ) != ENTERING_PASSIVE_MODE)
   {
-    client.println(COMMAND_PASSIVE_MODE);
+    client->println(COMMAND_PASSIVE_MODE);
     GetFTPAnswer();
     FTP_LOGDEBUG1("outBuf =", outBuf);
     delay(1000);
@@ -412,15 +415,15 @@ void FTPClient_Generic::InitFile(const char* type)
 
 #if ( (ESP32) && !FTP_CLIENT_USING_ETHERNET )
 
-  if (dclient.connect(_dataAddress, _dataPort, timeout))
+  if (dclient->connect(_dataAddress, _dataPort, timeout))
 #else
-  if (dclient.connect(_dataAddress, _dataPort))
+  if (dclient->connect(_dataAddress, _dataPort))
 #endif
   {
     FTP_LOGDEBUG(F("Data connection established"));
   }
 
-  client.println(type);
+  client->println(type);
   GetFTPAnswer();
 }
 
@@ -436,8 +439,8 @@ void FTPClient_Generic::AppendFile (const char* fileName)
     return;
   }
 
-  client.print(COMMAND_APPEND_FILE);
-  client.println(fileName);
+  client->print(COMMAND_APPEND_FILE);
+  client->println(fileName);
   GetFTPAnswer();
 }
 
@@ -453,8 +456,8 @@ void FTPClient_Generic::ChangeWorkDir(const char * dir)
     return;
   }
 
-  client.print(COMMAND_CURRENT_WORKING_DIR);
-  client.println(dir);
+  client->print(COMMAND_CURRENT_WORKING_DIR);
+  client->println(dir);
   GetFTPAnswer();
 }
 
@@ -470,8 +473,8 @@ void FTPClient_Generic::DeleteFile(const char * file)
     return;
   }
 
-  client.print(COMMAND_DELETE_FILE);
-  client.println(file);
+  client->print(COMMAND_DELETE_FILE);
+  client->println(file);
   GetFTPAnswer();
 }
 
@@ -487,8 +490,8 @@ void FTPClient_Generic::MakeDir(const char * dir)
     return;
   }
 
-  client.print(COMMAND_MAKE_DIR);
-  client.println(dir);
+  client->print(COMMAND_MAKE_DIR);
+  client->println(dir);
 
   GetFTPAnswer();
 }
@@ -505,8 +508,8 @@ void FTPClient_Generic::RemoveDir(const char * dir)
     return;
   }
 
-  client.print(COMMAND_REMOVE_DIR);
-  client.println(dir);
+  client->print(COMMAND_REMOVE_DIR);
+  client->println(dir);
 
   GetFTPAnswer();
 }
@@ -526,8 +529,8 @@ void FTPClient_Generic::ContentList(const char * dir, String * list)
     return;
   }
 
-  client.print(COMMAND_LIST_DIR_STANDARD);
-  client.println(dir);
+  client->print(COMMAND_LIST_DIR_STANDARD);
+  client->println(dir);
   GetFTPAnswer(_resp);
 
   // Convert char array to string to manipulate and find response size
@@ -538,14 +541,14 @@ void FTPClient_Generic::ContentList(const char * dir, String * list)
 
   unsigned long _m = millis();
 
-  while ( !dclient.available() && millis() < _m + timeout)
+  while ( !dclient->available() && millis() < _m + timeout)
     delay(1);
 
-  while (dclient.available())
+  while (dclient->available())
   {
     if ( _b < 128 )
     {
-      list[_b] = dclient.readStringUntil('\n');
+      list[_b] = dclient->readStringUntil('\n');
       //FTP_LOGDEBUG(String(_b) + ":" + list[_b]);
       _b++;
     }
@@ -567,8 +570,8 @@ void FTPClient_Generic::ContentListWithListCommand(const char * dir, String * li
     return;
   }
 
-  client.print(COMMAND_LIST_DIR);
-  client.println(dir);
+  client->print(COMMAND_LIST_DIR);
+  client->println(dir);
 
   GetFTPAnswer(_resp);
 
@@ -580,14 +583,14 @@ void FTPClient_Generic::ContentListWithListCommand(const char * dir, String * li
 
   unsigned long _m = millis();
 
-  while ( !dclient.available() && millis() < _m + timeout)
+  while ( !dclient->available() && millis() < _m + timeout)
     delay(1);
 
-  while (dclient.available())
+  while (dclient->available())
   {
     if ( _b < 128 )
     {
-      String tmp = dclient.readStringUntil('\n');
+      String tmp = dclient->readStringUntil('\n');
       list[_b] = tmp.substring(tmp.lastIndexOf(" ") + 1, tmp.length());
 
       //FTP_LOGDEBUG(String(_b) + ":" + tmp);
@@ -606,8 +609,8 @@ void FTPClient_Generic::DownloadString(const char * filename, String &str)
   if (!isConnected())
     return;
 
-  client.print(COMMAND_DOWNLOAD);
-  client.println(filename);
+  client->print(COMMAND_DOWNLOAD);
+  client->println(filename);
 
   char _resp[ sizeof(outBuf) ];
   GetFTPAnswer(_resp);
@@ -635,8 +638,8 @@ void FTPClient_Generic::DownloadFile(const char * filename, unsigned char * buf,
     return;
   }
 
-  client.print(COMMAND_DOWNLOAD);
-  client.println(filename);
+  client->print(COMMAND_DOWNLOAD);
+  client->println(filename);
 
   char _resp[ sizeof(outBuf) ];
   GetFTPAnswer(_resp);
@@ -645,18 +648,18 @@ void FTPClient_Generic::DownloadFile(const char * filename, unsigned char * buf,
 
   unsigned long _m = millis();
 
-  while ( !dclient.available() && millis() < _m + timeout)
+  while ( !dclient->available() && millis() < _m + timeout)
     delay(1);
 
-  while (dclient.available())
+  while (dclient->available())
   {
     if ( !printUART )
-      dclient.readBytes(buf, length);
+      dclient->readBytes(buf, length);
     else
     {
       for (size_t _b = 0; _b < length; _b++ )
       {
-        dclient.readBytes(_buf, 1);
+        dclient->readBytes(_buf, 1);
         //FTP_LOGDEBUG0(_buf[0]);
       }
     }

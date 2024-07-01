@@ -46,6 +46,39 @@
 
 #endif
 
+#if FTP_CLIENT_USING_QNETHERNET
+
+  #include <QNEthernetClient.h>
+  EthernetClient cmdClient;
+  EthernetClient dataClient;
+  
+#elif FTP_CLIENT_USING_NATIVE_ETHERNET
+
+  #include <NativeEthernetClient.h>
+  EthernetClient cmdClient;
+  EthernetClient dataClient;
+  
+#elif FTP_CLIENT_USING_ETHERNET
+
+  #include <EthernetClient.h>
+  EthernetClient cmdClient;
+  EthernetClient dataClient;
+  
+#elif FTP_CLIENT_USING_WIFININA
+
+  #include <WiFiClient_Generic.h>
+  WiFiClient cmdClient;
+  WiFiClient dataClient;
+
+#else
+
+  #include <WiFiClient.h>
+  WiFiClient cmdClient;
+  WiFiClient dataClient;
+  
+#endif
+
+
 // FTPClient_Generic(char* _serverAdress, char* _userName, char* _passWord, uint16_t _timeout = 10000);
 FTPClient_Generic ftp (ftp_server, ftp_user, ftp_pass, 60000);
 
@@ -288,7 +321,7 @@ void setup()
   Serial.println(ESP.getMaxAllocHeap());
 #endif
 
-  ftp.OpenConnection();
+  ftp.OpenConnection(&cmdClient, &dataClient);
 
   //Change directory
   ftp.ChangeWorkDir(dirName);

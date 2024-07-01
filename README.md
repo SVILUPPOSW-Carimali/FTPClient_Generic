@@ -1229,7 +1229,7 @@ FTPClient_Generic ftp (ftp_server, ftp_user, ftp_pass, 60000);
 **Starting the FTP Client**
 
 ```cpp
-ftp.OpenConnection();
+ftp.OpenConnection(&cmdClient, &dataClient);
 ```
 
 **Change working directory**

@@ -38,32 +38,9 @@
 
 /////////////////////////////////////////////
 
-#if FTP_CLIENT_USING_QNETHERNET
+#include <Client.h>
 
-  #include <QNEthernetClient.h>
-  #define theFTPClient    EthernetClient
-  
-#elif FTP_CLIENT_USING_NATIVE_ETHERNET
-
-  #include <NativeEthernetClient.h>
-  #define theFTPClient    EthernetClient  
-  
-#elif FTP_CLIENT_USING_ETHERNET
-
-  #include <EthernetClient.h>
-  #define theFTPClient    EthernetClient
-  
-#elif FTP_CLIENT_USING_WIFININA
-
-  #include <WiFiClient_Generic.h>
-  #define theFTPClient    WiFiClient
-  
-#else
-
-  #include <WiFiClient.h>
-  #define theFTPClient    WiFiClient
-  
-#endif
+typedef Client theFTPClient;
 
 /////////////////////////////////////////////
 
@@ -107,8 +84,8 @@ class FTPClient_Generic
   
     void WriteClientBuffered(theFTPClient* cli, unsigned char * data, int dataLength);
     
-    theFTPClient  client;
-    theFTPClient  dclient;
+    theFTPClient  * client;
+    theFTPClient  * dclient;
     
     char outBuf[128];
     unsigned char outCount;
@@ -136,14 +113,14 @@ class FTPClient_Generic
     FTPClient_Generic(char* _serverAdress, uint16_t _port, char* _userName, char* _passWord, uint16_t _timeout = 10000);
     FTPClient_Generic(char* _serverAdress, char* _userName, char* _passWord, uint16_t _timeout = 10000);
     
-    void OpenConnection();
+    void OpenConnection(theFTPClient  * cmdClient, theFTPClient  * dataClient);
     void CloseConnection();
     bool isConnected();
-    void NewFile (const char* fileName);
+    void NewFile(const char* fileName);
     void AppendFile(const char* fileName);
-    void WriteData (unsigned char * data, int dataLength);
-    void CloseFile ();
-    void GetFTPAnswer (char* result = NULL, int offsetStart = 0);
+    void WriteData(unsigned char * data, int dataLength);
+    void CloseFile();
+    void GetFTPAnswer(char* result = NULL, int offsetStart = 0);
     void GetLastModifiedTime(const char* fileName, char* result);
     void RenameFile(const char* from, const char* to);
     void Write(const char * str);
