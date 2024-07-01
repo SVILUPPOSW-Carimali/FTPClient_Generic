@@ -152,7 +152,7 @@ void setup()
   Serial.println("The file content is: " + response);
 
   // Get the file size
-  String       list[128];
+  FTPListEntry       list[128];
 
   // Get the directory content in order to allocate buffer
   // my server response => type=file;modify=20190101000010;size=18; helloworld.txt
@@ -163,12 +163,12 @@ void setup()
 
   for (uint16_t i = 0; i < sizeof(list); i++)
   {
-    if (list[i].length() > 0)
+    if (list[i].name.length() > 0)
     {
-      list[i].toLowerCase();
+      list[i].name.toLowerCase();
 
       // Print the directory details
-      Serial.println(list[i]);
+      Serial.println(list[i].name);
     }
     else
       break;

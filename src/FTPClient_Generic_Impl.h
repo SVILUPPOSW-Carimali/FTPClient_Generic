@@ -518,7 +518,7 @@ void FTPClient_Generic::RemoveDir(const char * dir)
 
 /////////////////////////////////////////////
 
-size_t FTPClient_Generic::ContentList(const char * dir, String * list, size_t sz)
+size_t FTPClient_Generic::ContentList(const char * dir, FTPListEntry * list, size_t sz)
 {
   char _resp[ sizeof(outBuf) ];
   size_t _b = 0;
@@ -550,7 +550,8 @@ size_t FTPClient_Generic::ContentList(const char * dir, String * list, size_t sz
   {
     if ( _b < sz )
     {
-      list[_b] = dclient->readStringUntil('\n');
+      //TODO: parse facts and return only if Type=file or Type=dir
+      list[_b].name = dclient->readStringUntil('\n');
       //FTP_LOGDEBUG(String(_b) + ":" + list[_b]);
       _b++;
     }
@@ -560,7 +561,7 @@ size_t FTPClient_Generic::ContentList(const char * dir, String * list, size_t sz
 
 /////////////////////////////////////////////
 
-size_t FTPClient_Generic::ContentListWithListCommand(const char * dir, String * list, size_t sz)
+size_t FTPClient_Generic::ContentListWithListCommand(const char * dir, FTPListEntry * list, size_t sz)
 {
   char _resp[ sizeof(outBuf) ];
   size_t _b = 0;
@@ -594,7 +595,15 @@ size_t FTPClient_Generic::ContentListWithListCommand(const char * dir, String * 
     if ( _b < sz )
     {
       String tmp = dclient->readStringUntil('\n');
-      list[_b] = tmp.substring(tmp.lastIndexOf(" ") + 1, tmp.length());
+      if ((tmp[0] == 'd') || (tmp[0] == 'D')) {
+        list[_b].isDirectory = true;
+      } else {
+        list[_b].isDirectory = false;
+      }
+      if (tmp[tmp.length() - 1] == '\r') {
+        tmp = tmp.substring(0, tmp.length() - 1);
+      }
+      list[_b].name = tmp.substring(tmp.lastIndexOf(" ") + 1, tmp.length());
 
       //FTP_LOGDEBUG(String(_b) + ":" + tmp);
 

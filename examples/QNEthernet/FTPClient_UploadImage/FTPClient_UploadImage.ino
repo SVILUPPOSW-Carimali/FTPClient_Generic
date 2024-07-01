@@ -181,7 +181,7 @@ void setup()
   ftp.ChangeWorkDir(dirName);
 
   // Get the file size
-  String       list[128];
+  FTPListEntry       list[128];
 
   // Get the directory content in order to allocate buffer
   // my server response => type=file;modify=20190101000010;size=18; helloworld.txt
@@ -192,8 +192,8 @@ void setup()
 
   for (uint16_t i = 0; i < sizeof(list); i++)
   {
-    if (list[i].length() > 0)
-      Serial.println(list[i]);
+    if (list[i].name.length() > 0)
+      Serial.println(list[i].name);
     else
       break;
   }

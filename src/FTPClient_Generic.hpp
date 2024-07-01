@@ -78,6 +78,12 @@ typedef Client theFTPClient;
 
 /////////////////////////////////////////////
 
+typedef struct {
+  String name;
+  bool isDirectory;
+} FTPListEntry;
+
+
 class FTPClient_Generic
 {
   private:
@@ -130,8 +136,8 @@ class FTPClient_Generic
     void DeleteFile(const char * file);
     void MakeDir(const char * dir);
     void RemoveDir(const char * dir);
-    size_t ContentList(const char * dir, String * list, size_t sz = 128);
-    size_t ContentListWithListCommand(const char * dir, String * list, size_t sz = 128);
+    size_t ContentList(const char * dir, FTPListEntry * list, size_t sz = 128);
+    size_t ContentListWithListCommand(const char * dir, FTPListEntry * list, size_t sz = 128);
     void DownloadString(const char * filename, String &str);
     void DownloadFile(const char * filename, unsigned char * buf, size_t length, bool printUART = false);
 };
