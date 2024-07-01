@@ -1250,7 +1250,7 @@ ftp.MakeDir("myNewDir");
 
 ```cpp
 ftp.InitFile(COMMAND_XFER_TYPE_ASCII);
-ftp.ContentList("", list);
+ftp.ContentList("", list, sizeof(list));
 
 for (uint16_t i = 0; i < sizeof(list); i++)
 {

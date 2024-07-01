@@ -518,17 +518,17 @@ void FTPClient_Generic::RemoveDir(const char * dir)
 
 /////////////////////////////////////////////
 
-void FTPClient_Generic::ContentList(const char * dir, String * list)
+size_t FTPClient_Generic::ContentList(const char * dir, String * list, size_t sz)
 {
   char _resp[ sizeof(outBuf) ];
-  uint16_t _b = 0;
+  size_t _b = 0;
 
   FTP_LOGINFO("Send MLSD");
 
   if (!isConnected())
   {
     FTP_LOGERROR("ContentList: Not connected error");
-    return;
+    return 0;
   }
 
   client->print(COMMAND_LIST_DIR_STANDARD);
@@ -548,28 +548,29 @@ void FTPClient_Generic::ContentList(const char * dir, String * list)
 
   while (dclient->available())
   {
-    if ( _b < 128 )
+    if ( _b < sz )
     {
       list[_b] = dclient->readStringUntil('\n');
       //FTP_LOGDEBUG(String(_b) + ":" + list[_b]);
       _b++;
     }
   }
+  return _b;
 }
 
 /////////////////////////////////////////////
 
-void FTPClient_Generic::ContentListWithListCommand(const char * dir, String * list)
+size_t FTPClient_Generic::ContentListWithListCommand(const char * dir, String * list, size_t sz)
 {
   char _resp[ sizeof(outBuf) ];
-  uint16_t _b = 0;
+  size_t _b = 0;
 
   FTP_LOGINFO("Send LIST");
 
   if (!isConnected())
   {
     FTP_LOGERROR("ContentListWithListCommand: Not connected error");
-    return;
+    return 0;
   }
 
   client->print(COMMAND_LIST_DIR);
@@ -590,7 +591,7 @@ void FTPClient_Generic::ContentListWithListCommand(const char * dir, String * li
 
   while (dclient->available())
   {
-    if ( _b < 128 )
+    if ( _b < sz )
     {
       String tmp = dclient->readStringUntil('\n');
       list[_b] = tmp.substring(tmp.lastIndexOf(" ") + 1, tmp.length());
@@ -600,6 +601,7 @@ void FTPClient_Generic::ContentListWithListCommand(const char * dir, String * li
       _b++;
     }
   }
+  return _b;
 }
 
 /////////////////////////////////////////////
