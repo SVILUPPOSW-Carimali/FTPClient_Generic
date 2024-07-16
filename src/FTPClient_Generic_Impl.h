@@ -681,4 +681,23 @@ void FTPClient_Generic::DownloadFile(const char * filename, unsigned char * buf,
 
 /////////////////////////////////////////////
 
+uint32_t FTPClient_Generic::GetFileSize(const char * filename)
+{
+  FTP_LOGINFO("Send SIZE");
+
+  if (!isConnected())
+    return 0xFFFFFFFF;
+
+  client->print(COMMAND_SIZE);
+  client->println(filename);
+
+  char _resp[ sizeof(outBuf) ];
+  GetFTPAnswer(_resp, 4);
+  
+  uint32_t ret = (uint32_t) atoi(_resp);
+  return ret;
+}
+
+/////////////////////////////////////////////
+
 #endif    // FTPCLIENT_GENERIC_IMPL_H

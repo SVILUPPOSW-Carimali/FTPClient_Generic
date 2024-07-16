@@ -66,6 +66,7 @@ typedef Client theFTPClient;
 
 #define COMMAND_DOWNLOAD                F("RETR ")
 #define COMMAND_FILE_UPLOAD             F("STOR ")
+#define COMMAND_SIZE                    F("SIZE ")
 
 #define COMMAND_PASSIVE_MODE            F("PASV")
 
@@ -140,6 +141,7 @@ class FTPClient_Generic
     size_t ContentListWithListCommand(const char * dir, FTPListEntry * list, size_t sz = 128);
     void DownloadString(const char * filename, String &str);
     void DownloadFile(const char * filename, unsigned char * buf, size_t length, bool printUART = false);
+    uint32_t GetFileSize(const char * filename);
 };
 
 #endif  // FTPCLIENT_GENERIC_HPP
