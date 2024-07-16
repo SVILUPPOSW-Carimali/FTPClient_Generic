@@ -128,8 +128,8 @@ class FTPClient_Generic
     void AppendFile(const char* fileName);
     void WriteData(unsigned char * data, int dataLength);
     void CloseFile();
-    void GetFTPAnswer(char* result = NULL, int offsetStart = 0);
-    void GetLastModifiedTime(const char* fileName, char* result);
+    int  GetFTPAnswer(char* result = NULL, size_t len = 0);
+    void GetLastModifiedTime(const char* fileName, char* result, size_t len);
     void RenameFile(const char* from, const char* to);
     void Write(const char * str);
     void InitFile(const char* type);

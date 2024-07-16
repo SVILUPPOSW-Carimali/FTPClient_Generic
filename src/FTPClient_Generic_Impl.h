@@ -90,7 +90,7 @@ bool FTPClient_Generic::isConnected()
 
 /////////////////////////////////////////////
 
-void FTPClient_Generic::GetLastModifiedTime(const char  * fileName, char* result)
+void FTPClient_Generic::GetLastModifiedTime(const char  * fileName, char* result, size_t len)
 {
   FTP_LOGINFO("Send MDTM");
 
@@ -102,7 +102,7 @@ void FTPClient_Generic::GetLastModifiedTime(const char  * fileName, char* result
 
   client->print(COMMAND_FILE_LAST_MOD_TIME);
   client->println(fileName);
-  GetFTPAnswer (result, 4);
+  GetFTPAnswer(result, len);
 }
 
 /////////////////////////////////////////////
@@ -144,8 +144,10 @@ void FTPClient_Generic::WriteClientBuffered(theFTPClient* cli, unsigned char * d
 
 /////////////////////////////////////////////
 
-void FTPClient_Generic::GetFTPAnswer (char* result, int offsetStart)
+int FTPClient_Generic::GetFTPAnswer(char* result, size_t len)
 {
+  int ret = 0;
+  char * endPtr = NULL;
   char thisByte;
   outCount = 0;
 
@@ -162,7 +164,7 @@ void FTPClient_Generic::GetFTPAnswer (char* result, int offsetStart)
     _isConnected = false;
     isConnected();
 
-    return;
+    return ret;
   }
 
   while (client->available())
@@ -171,6 +173,10 @@ void FTPClient_Generic::GetFTPAnswer (char* result, int offsetStart)
 
     if (outCount < sizeof(outBuf))
     {
+      if ((outCount == 0) && (thisByte == ' ')) {
+        //ignore initial spaces
+        continue;
+      }
       outBuf[outCount] = thisByte;
       outCount++;
       outBuf[outCount] = 0;
@@ -181,24 +187,36 @@ void FTPClient_Generic::GetFTPAnswer (char* result, int offsetStart)
   {
     _isConnected = false;
     isConnected();
-
-    return;
-  }
+  } 
   else
   {
     _isConnected = true;
   }
 
-  if (result != NULL)
-  {
-    // Deprecated
-    for (uint32_t i = offsetStart; i < sizeof(outBuf); i++)
-    {
-      result[i] = outBuf[i - offsetStart];
-    }
+  ret = strtol(outBuf, &endPtr, 10);
 
-    FTP_LOGDEBUG1("Result: ", outBuf);
+  if (result) {
+    //strip off result code (3 digits) and spaces
+    if (endPtr) {
+      int start = endPtr - outBuf;
+      for (size_t i = start; i < sizeof(outBuf); i++) {
+        if (endPtr[0] == ' ') {
+          endPtr++;
+        } else {
+          break;
+        }
+      }
+      start = endPtr - outBuf;
+      memcpy(result, endPtr, min(sizeof(outBuf) - start, len));
+    } else {
+      memset(result, 0, len);
+    }
+    FTP_LOGDEBUG2("Result: ", ret, result);
+  } else {
+    FTP_LOGDEBUG2("Result: ", ret, endPtr);
   }
+
+  return ret;
 }
 
 /////////////////////////////////////////////
@@ -533,7 +551,7 @@ size_t FTPClient_Generic::ContentList(const char * dir, FTPListEntry * list, siz
 
   client->print(COMMAND_LIST_DIR_STANDARD);
   client->println(dir);
-  GetFTPAnswer(_resp);
+  GetFTPAnswer(_resp, sizeof(outBuf));
 
   // Convert char array to string to manipulate and find response size
   // each server reports it differently, TODO = FEAT
@@ -577,7 +595,7 @@ size_t FTPClient_Generic::ContentListWithListCommand(const char * dir, FTPListEn
   client->print(COMMAND_LIST_DIR);
   client->println(dir);
 
-  GetFTPAnswer(_resp);
+  GetFTPAnswer(_resp, sizeof(outBuf));
 
   // Convert char array to string to manipulate and find response size
   // each server reports it differently, TODO = FEAT
@@ -626,7 +644,7 @@ void FTPClient_Generic::DownloadString(const char * filename, String &str)
   client->println(filename);
 
   char _resp[ sizeof(outBuf) ];
-  GetFTPAnswer(_resp);
+  GetFTPAnswer(_resp, sizeof(outBuf));
 
   unsigned long _m = millis();
 
@@ -656,7 +674,7 @@ uint32_t FTPClient_Generic::DownloadFile(const char * filename, unsigned char * 
   client->println(filename);
 
   char _resp[ sizeof(outBuf) ];
-  GetFTPAnswer(_resp);
+  GetFTPAnswer(_resp, sizeof(outBuf));
 
   char _buf[2];
 
@@ -695,7 +713,7 @@ uint32_t FTPClient_Generic::GetFileSize(const char * filename)
   client->println(filename);
 
   char _resp[ sizeof(outBuf) ];
-  GetFTPAnswer(_resp, 4);
+  GetFTPAnswer(_resp, sizeof(outBuf));
   
   uint32_t ret = (uint32_t) atoi(_resp);
   return ret;
