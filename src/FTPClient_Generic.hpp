@@ -140,7 +140,7 @@ class FTPClient_Generic
     size_t ContentList(const char * dir, FTPListEntry * list, size_t sz = 128);
     size_t ContentListWithListCommand(const char * dir, FTPListEntry * list, size_t sz = 128);
     void DownloadString(const char * filename, String &str);
-    void DownloadFile(const char * filename, unsigned char * buf, size_t length, bool printUART = false);
+    uint32_t DownloadFile(const char * filename, unsigned char * buf, size_t length, bool printUART = false);
     uint32_t GetFileSize(const char * filename);
 };
 

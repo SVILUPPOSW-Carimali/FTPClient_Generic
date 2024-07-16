@@ -641,14 +641,15 @@ void FTPClient_Generic::DownloadString(const char * filename, String &str)
 
 /////////////////////////////////////////////
 
-void FTPClient_Generic::DownloadFile(const char * filename, unsigned char * buf, size_t length, bool printUART )
+uint32_t FTPClient_Generic::DownloadFile(const char * filename, unsigned char * buf, size_t length, bool printUART )
 {
+  uint32_t res = 0;
   FTP_LOGINFO("Send RETR");
 
   if (!isConnected())
   {
     FTP_LOGERROR("DownloadFile: Not connected error");
-    return;
+    return res;
   }
 
   client->print(COMMAND_DOWNLOAD);
@@ -667,16 +668,18 @@ void FTPClient_Generic::DownloadFile(const char * filename, unsigned char * buf,
   while (dclient->available())
   {
     if ( !printUART )
-      dclient->readBytes(buf, length);
+      res += dclient->readBytes(buf, length);
     else
     {
       for (size_t _b = 0; _b < length; _b++ )
       {
         dclient->readBytes(_buf, 1);
+        res++;
         //FTP_LOGDEBUG0(_buf[0]);
       }
     }
   }
+  return res;
 }
 
 /////////////////////////////////////////////
