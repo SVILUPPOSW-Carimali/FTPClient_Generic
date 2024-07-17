@@ -702,6 +702,41 @@ uint32_t FTPClient_Generic::DownloadFile(const char * filename, unsigned char * 
 
 /////////////////////////////////////////////
 
+uint32_t FTPClient_Generic::DownloadProgressive(const char * filename, FTPDownloadCallback downloadCallback, void * userData) 
+{
+  uint32_t res = 0;
+
+  FTP_LOGINFO("Send RETR");
+
+  if (!isConnected())
+  {
+    FTP_LOGERROR("DownloadFile: Not connected error");
+    return res;
+  }
+
+  client->print(COMMAND_DOWNLOAD);
+  client->println(filename);
+
+  GetFTPAnswer();
+
+  unsigned long _m = millis();
+
+  while ( !dclient->available() && millis() < _m + timeout)
+    delay(1);
+
+  while (dclient->available())
+  {
+    size_t sz = dclient->readBytes(downloadBuf, BUFFER_SIZE);
+
+    downloadCallback(filename, downloadBuf, sz, userData);
+
+    res += sz;
+  }
+  return res;
+}
+
+/////////////////////////////////////////////
+
 uint32_t FTPClient_Generic::GetFileSize(const char * filename)
 {
   FTP_LOGINFO("Send SIZE");
