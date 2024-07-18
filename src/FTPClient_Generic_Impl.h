@@ -29,6 +29,7 @@
 #define FTPCLIENT_GENERIC_IMPL_H
 
 #include "FTPClient_Generic.hpp"
+#include "ftpparse.h"
 
 #if !defined(USING_NEW_PASSIVE_MODE_ANSWER_TYPE)
   #define USING_NEW_PASSIVE_MODE_ANSWER_TYPE    true
@@ -613,18 +614,26 @@ size_t FTPClient_Generic::ContentListWithListCommand(const char * dir, FTPListEn
     if ( _b < sz )
     {
       String tmp = dclient->readStringUntil('\n');
-      if ((tmp[0] == 'd') || (tmp[0] == 'D')) {
-        list[_b].isDirectory = true;
-      } else {
-        list[_b].isDirectory = false;
-      }
       if (tmp[tmp.length() - 1] == '\r') {
         tmp = tmp.substring(0, tmp.length() - 1);
       }
-      list[_b].name = tmp.substring(tmp.lastIndexOf(" ") + 1, tmp.length());
-
-      //FTP_LOGDEBUG(String(_b) + ":" + tmp);
-
+      FTP_LOGDEBUG(String(_b) + ":" + tmp);
+      struct ftpparse item;
+      int parse = ftpparse(&item, (char*) tmp.c_str(), tmp.length());
+      if (parse) {
+        list[_b].name = item.name;
+        list[_b].isDirectory = (item.flagtrycwd != 0);
+        list[_b].size = ((item.flagtrycwd == 0) ? item.size : 0);
+        FTP_LOGDEBUG3(_b, list[_b].name, (list[_b].isDirectory ? "D" : ""), list[_b].size);
+      } else {
+        if ((tmp[0] == 'd') || (tmp[0] == 'D')) {
+          list[_b].isDirectory = true;
+        } else {
+          list[_b].isDirectory = false;
+        }
+        list[_b].name = tmp.substring(tmp.lastIndexOf(" ") + 1, tmp.length());
+      }
+      
       _b++;
     }
   }

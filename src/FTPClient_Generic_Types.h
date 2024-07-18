@@ -9,8 +9,9 @@
 #define FTPCLIENT_GENERIC_TYPES_H
 
 typedef struct FTPListEntry {
-  String name;
-  bool isDirectory;
+  String   name;
+  bool     isDirectory;
+  uint32_t size;
 } FTPListEntry;
 
 /////////////////////////////////////////////////////////
