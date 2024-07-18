@@ -29,6 +29,7 @@
 #define FTPCLIENT_GENERIC_HPP
 
 #include "FTPClient_Generic_Debug.h"
+#include "FTPClient_Generic_Types.h"
 
 /////////////////////////////////////////////
 
@@ -78,11 +79,6 @@ typedef Client theFTPClient;
 #define ENTERING_PASSIVE_MODE           227
 
 /////////////////////////////////////////////
-
-typedef struct {
-  String name;
-  bool isDirectory;
-} FTPListEntry;
 
 
 typedef void (*FTPDownloadCallback)(const char * filename, const uint8_t * buf, size_t length, void * userData);
