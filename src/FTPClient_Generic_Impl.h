@@ -353,21 +353,25 @@ void FTPClient_Generic::NewFile (const char* fileName)
 
 /////////////////////////////////////////////
 
-void FTPClient_Generic::InitFile(const char* type)
+bool FTPClient_Generic::InitFile(const char* type)
 {
+  bool res = false;
+  int ret = 0;
   FTP_LOGINFO1("Send TYPE", type);
 
   if (!isConnected())
   {
     FTP_LOGERROR("InitFile: Not connected error");
-    return;
+    return res;
   }
 
   FTP_LOGINFO("Send PASV");
 
   client->println(COMMAND_PASSIVE_MODE);
-  GetFTPAnswer();
-
+  ret = GetFTPAnswer();
+  if ((ret < 100) || (ret >= 400)) {
+    return res;
+  }
   // KH
   FTP_LOGDEBUG1("outBuf =", outBuf);
 
@@ -377,7 +381,10 @@ void FTPClient_Generic::InitFile(const char* type)
   while (strtol(outBuf, &tmpPtr, 10 ) != ENTERING_PASSIVE_MODE)
   {
     client->println(COMMAND_PASSIVE_MODE);
-    GetFTPAnswer();
+    ret = GetFTPAnswer();
+    if ((ret < 100) || (ret >= 400)) {
+      return res;
+    }
     FTP_LOGDEBUG1("outBuf =", outBuf);
     delay(1000);
   }
@@ -404,7 +411,7 @@ void FTPClient_Generic::InitFile(const char* type)
         FTP_LOGDEBUG(F("Bad PASV Answer"));
 
         CloseConnection();
-        return;
+        return res;
       }
 
       array_pasv[i] = atoi(tStr);
@@ -442,10 +449,16 @@ void FTPClient_Generic::InitFile(const char* type)
   if (dclient->connect(_dataAddress, _dataPort))
   {
     FTP_LOGDEBUG(F("Data connection established"));
+    res = true;
   }
 
   client->println(type);
-  GetFTPAnswer();
+  ret = GetFTPAnswer();
+  if ((ret < 100) || (ret >= 400)) {
+    return false;
+  }
+
+  return res;
 }
 
 /////////////////////////////////////////////
@@ -540,19 +553,25 @@ void FTPClient_Generic::RemoveDir(const char * dir)
 size_t FTPClient_Generic::ContentList(const char * dir, FTPListEntry * list, size_t sz)
 {
   char _resp[ sizeof(outBuf) ];
-  size_t _b = 0;
+  size_t _b = 0xFFFFFFFF;  //error
+  int ret = 0;
 
   FTP_LOGINFO("Send MLSD");
 
   if (!isConnected())
   {
     FTP_LOGERROR("ContentList: Not connected error");
-    return 0;
+    return _b;
   }
 
   client->print(COMMAND_LIST_DIR_STANDARD);
   client->println(dir);
-  GetFTPAnswer(_resp, sizeof(outBuf));
+
+  ret = GetFTPAnswer(_resp, sizeof(outBuf));
+  if ((ret < 100) || (ret >= 400)) {
+    return _b;
+  }
+
 
   // Convert char array to string to manipulate and find response size
   // each server reports it differently, TODO = FEAT
@@ -564,6 +583,8 @@ size_t FTPClient_Generic::ContentList(const char * dir, FTPListEntry * list, siz
 
   while ( !dclient->available() && millis() < _m + timeout)
     delay(1);
+
+  _b = 0;
 
   while (dclient->available())
   {
@@ -583,20 +604,24 @@ size_t FTPClient_Generic::ContentList(const char * dir, FTPListEntry * list, siz
 size_t FTPClient_Generic::ContentListWithListCommand(const char * dir, FTPListEntry * list, size_t sz)
 {
   char _resp[ sizeof(outBuf) ];
-  size_t _b = 0;
+  size_t _b = 0xFFFFFFFF;  //error
+  int ret = 0;
 
   FTP_LOGINFO("Send LIST");
 
   if (!isConnected())
   {
     FTP_LOGERROR("ContentListWithListCommand: Not connected error");
-    return 0;
+    return _b;
   }
 
   client->print(COMMAND_LIST_DIR);
   client->println(dir);
 
-  GetFTPAnswer(_resp, sizeof(outBuf));
+  ret = GetFTPAnswer(_resp, sizeof(outBuf));
+  if ((ret < 100) || (ret >= 400)) {
+    return _b;
+  }
 
   // Convert char array to string to manipulate and find response size
   // each server reports it differently, TODO = FEAT
@@ -608,6 +633,8 @@ size_t FTPClient_Generic::ContentListWithListCommand(const char * dir, FTPListEn
 
   while ( !dclient->available() && millis() < _m + timeout)
     delay(1);
+
+  _b = 0;
 
   while (dclient->available())
   {

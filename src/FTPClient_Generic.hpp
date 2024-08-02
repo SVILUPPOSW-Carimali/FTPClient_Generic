@@ -131,7 +131,7 @@ class FTPClient_Generic
     void GetLastModifiedTime(const char* fileName, char* result, size_t len);
     void RenameFile(const char* from, const char* to);
     void Write(const char * str);
-    void InitFile(const char* type);
+    bool InitFile(const char* type);
     void ChangeWorkDir(const char * dir);
     void DeleteFile(const char * file);
     void MakeDir(const char * dir);
