@@ -76,6 +76,7 @@ typedef Client theFTPClient;
 
 /////////////////////////////////////////////
 
+#define TRANSFER_COMPLETE               226
 #define ENTERING_PASSIVE_MODE           227
 
 /////////////////////////////////////////////
@@ -126,6 +127,7 @@ class FTPClient_Generic
     void AppendFile(const char* fileName);
     void WriteData(unsigned char * data, int dataLength);
     void CloseFile();
+    bool WaitCloseOrTransferComplete();
     int  GetFTPAnswer(char* result = NULL, size_t len = 0);
     void GetLastModifiedTime(const char* fileName, char* result, size_t len);
     void RenameFile(const char* from, const char* to);

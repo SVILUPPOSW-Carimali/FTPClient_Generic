@@ -253,6 +253,38 @@ void FTPClient_Generic::CloseFile ()
   GetFTPAnswer();
 }
 
+bool FTPClient_Generic::WaitCloseOrTransferComplete() {
+  bool ret = false;
+  FTP_LOGDEBUG(F("WaitCloseOrTransferComplete"));
+
+  unsigned long _m = millis();
+
+  while (millis() < _m + timeout) {    
+    if (!dclient->connected()) {
+      ret = true;
+      break;
+    }
+
+    int res = GetFTPAnswer();
+    if (res == TRANSFER_COMPLETE) {
+      ret = true;
+      break;
+    }
+    delay(100);
+  }
+
+  if (!isConnected())
+  {
+    FTP_LOGERROR("CloseFile: Not connected error");
+    return ret;
+  }
+
+  GetFTPAnswer();
+
+  return ret;
+}
+
+
 /////////////////////////////////////////////
 
 void FTPClient_Generic::Write(const char * str)
