@@ -174,9 +174,12 @@ int FTPClient_Generic::GetFTPAnswer(char* result, size_t len)
 
     if (outCount < sizeof(outBuf))
     {
-      if ((outCount == 0) && (thisByte == ' ')) {
+      if ((outCount == 0) && ((thisByte == ' ') || (thisByte == '\r') || (thisByte == '\n'))) {
         //ignore initial spaces
         continue;
+      } else if (thisByte == '\n') {
+        //process only one answer at a time
+        break;
       }
       outBuf[outCount] = thisByte;
       outCount++;
@@ -220,6 +223,73 @@ int FTPClient_Generic::GetFTPAnswer(char* result, size_t len)
   return ret;
 }
 
+
+int FTPClient_Generic::TryGetFTPAnswer(char* result, size_t len)
+{
+  int ret = -1;
+  char * endPtr = NULL;
+  char thisByte;
+  outCount = 0;
+
+
+  while (client->available())
+  {
+    thisByte = client->read();
+
+    if (outCount < sizeof(outBuf))
+    {
+      if ((outCount == 0) && ((thisByte == ' ') || (thisByte == '\r') || (thisByte == '\n'))) {
+        //ignore initial spaces
+        continue;
+      } else if (thisByte == '\n') {
+        //process only one answer at a time
+        break;
+      }
+      outBuf[outCount] = thisByte;
+      outCount++;
+      outBuf[outCount] = 0;
+    }
+  }
+
+  if (outCount > 0) {
+
+    if (outBuf[0] == '4' || outBuf[0] == '5' )
+    {
+      _isConnected = false;
+      isConnected();
+    } 
+    else
+    {
+      _isConnected = true;
+    }
+
+    ret = strtol(outBuf, &endPtr, 10);
+
+    if (result) {
+      //strip off result code (3 digits) and spaces
+      if (endPtr) {
+        int start = endPtr - outBuf;
+        for (size_t i = start; i < sizeof(outBuf); i++) {
+          if (endPtr[0] == ' ') {
+            endPtr++;
+          } else {
+            break;
+          }
+        }
+        start = endPtr - outBuf;
+        memcpy(result, endPtr, min(sizeof(outBuf) - start, len));
+      } else {
+        memset(result, 0, len);
+      }
+      FTP_LOGDEBUG2("Result: ", ret, result);
+    } else {
+      FTP_LOGDEBUG2("Result: ", ret, endPtr);
+    }
+  }
+  return ret;
+}
+
+
 /////////////////////////////////////////////
 
 void FTPClient_Generic::WriteData (unsigned char * data, int dataLength)
@@ -255,19 +325,33 @@ void FTPClient_Generic::CloseFile ()
 
 bool FTPClient_Generic::WaitCloseOrTransferComplete() {
   bool ret = false;
+  bool bClosed = false;
+  bool bAnswer = false;
   FTP_LOGDEBUG(F("WaitCloseOrTransferComplete"));
 
   unsigned long _m = millis();
 
   while (millis() < _m + timeout) {    
     if (!dclient->connected()) {
+      if (!bClosed) {
+        FTP_LOGDEBUG2("Data socket closed by server after ", (millis() - _m), " ms");
+        bClosed = true;
+      }
       ret = true;
-      break;
     }
 
-    int res = GetFTPAnswer();
+    int res = TryGetFTPAnswer();
+    if (res > 0) {
+      if (!bAnswer) {
+        FTP_LOGDEBUG2("Ftp answer after ", (millis() - _m), " ms");
+        bAnswer = true;
+      }
+    }
     if (res == TRANSFER_COMPLETE) {
       ret = true;
+    }
+
+    if (bClosed && bAnswer) {
       break;
     }
     delay(100);
@@ -275,11 +359,8 @@ bool FTPClient_Generic::WaitCloseOrTransferComplete() {
 
   if (!isConnected())
   {
-    FTP_LOGERROR("CloseFile: Not connected error");
-    return ret;
+    FTP_LOGERROR("WaitCloseOrTransferComplete: Not connected error");
   }
-
-  GetFTPAnswer();
 
   return ret;
 }
