@@ -480,19 +480,23 @@ void FTPClient_Generic::AppendFile (const char* fileName)
 
 /////////////////////////////////////////////
 
-void FTPClient_Generic::ChangeWorkDir(const char * dir)
+bool FTPClient_Generic::ChangeWorkDir(const char * dir)
 {
   FTP_LOGINFO("Send CWD");
 
   if (!isConnected())
   {
     FTP_LOGERROR("ChangeWorkDir: Not connected error");
-    return;
+    return false;
   }
 
   client->print(COMMAND_CURRENT_WORKING_DIR);
   client->println(dir);
-  GetFTPAnswer();
+  int ret = GetFTPAnswer();
+  if ((ret < 100) || (ret >= 400)) {
+    return false;
+  }
+  return true;
 }
 
 /////////////////////////////////////////////

@@ -131,7 +131,7 @@ class FTPClient_Generic
     void RenameFile(const char* from, const char* to);
     void Write(const char * str);
     bool InitFile(const char* type);
-    void ChangeWorkDir(const char * dir);
+    bool ChangeWorkDir(const char * dir);
     void DeleteFile(const char * file);
     void MakeDir(const char * dir);
     void RemoveDir(const char * dir);
