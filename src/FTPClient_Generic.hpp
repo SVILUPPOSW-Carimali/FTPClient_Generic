@@ -101,7 +101,6 @@ class FTPClient_Generic
     uint16_t      port;
     bool          _isConnected = false;
     unsigned char clientBuf[BUFFER_SIZE];
-    unsigned char downloadBuf[BUFFER_SIZE];
     size_t        bufferSize = BUFFER_SIZE;
     uint16_t      timeout = TIMEOUT_MS;
     
@@ -140,7 +139,7 @@ class FTPClient_Generic
     size_t ContentListWithListCommand(const char * dir, FTPListEntry * list, size_t sz = 128);
     void DownloadString(const char * filename, String &str);
     uint32_t DownloadFile(const char * filename, unsigned char * buf, size_t length, bool printUART = false);
-    uint32_t DownloadProgressive(const char * filename, FTPDownloadCallback downloadCallback, void * userData = NULL);
+    uint32_t DownloadProgressive(const char * filename, uint8_t * buffer, size_t bufferLen, FTPDownloadCallback downloadCallback, void * userData = NULL);
     uint32_t GetFileSize(const char * filename);
 };
 

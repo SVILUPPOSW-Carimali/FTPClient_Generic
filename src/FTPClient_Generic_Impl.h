@@ -738,7 +738,7 @@ uint32_t FTPClient_Generic::DownloadFile(const char * filename, unsigned char * 
 
 /////////////////////////////////////////////
 
-uint32_t FTPClient_Generic::DownloadProgressive(const char * filename, FTPDownloadCallback downloadCallback, void * userData) 
+uint32_t FTPClient_Generic::DownloadProgressive(const char * filename, uint8_t * buffer, size_t bufferLen, FTPDownloadCallback downloadCallback, void * userData) 
 {
   uint32_t res = 0;
 
@@ -762,9 +762,9 @@ uint32_t FTPClient_Generic::DownloadProgressive(const char * filename, FTPDownlo
 
   while (dclient->available())
   {
-    size_t sz = dclient->readBytes(downloadBuf, BUFFER_SIZE);
+    size_t sz = dclient->readBytes(buffer, bufferLen);
 
-    downloadCallback(filename, downloadBuf, sz, userData);
+    downloadCallback(filename, buffer, sz, userData);
 
     res += sz;
   }
