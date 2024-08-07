@@ -858,6 +858,7 @@ uint32_t FTPClient_Generic::DownloadFile(const char * filename, unsigned char * 
 uint32_t FTPClient_Generic::DownloadProgressive(const char * filename, uint8_t * buffer, size_t bufferLen, FTPDownloadCallback downloadCallback, void * userData) 
 {
   uint32_t res = 0;
+  bool keepDownloading = true;
 
   FTP_LOGINFO("Send RETR");
 
@@ -877,13 +878,19 @@ uint32_t FTPClient_Generic::DownloadProgressive(const char * filename, uint8_t *
   while ( !dclient->available() && millis() < _m + timeout)
     delay(1);
 
-  while (dclient->available())
-  {
-    size_t sz = dclient->readBytes(buffer, bufferLen);
-
-    downloadCallback(filename, buffer, sz, userData);
-
-    res += sz;
+  while (keepDownloading) {
+    while (dclient->available())
+    {
+      size_t sz = dclient->readBytes(buffer, bufferLen);
+      downloadCallback(filename, buffer, sz, userData);
+      _m = millis();
+      res += sz;
+    }
+    if ((!dclient->connected()) || (millis() >= _m + timeout)) {
+      FTP_LOGDEBUG("Download end");
+      keepDownloading = false;
+    }
+    delay(10);
   }
   return res;
 }
